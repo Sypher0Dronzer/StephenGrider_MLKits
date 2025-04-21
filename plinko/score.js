@@ -1,12 +1,11 @@
 let outputs = [];
-
+const k=10
 function onScoreUpdate(dropPosition, bounciness, size, bucketLabel) {
   outputs.push([dropPosition, bounciness, size, bucketLabel]);
 }
 
 function runAnalysis() {
-  const testSetSize = 100;
-  const [testSet, trainingSet] = splitDataset(outputs, testSetSize);
+  const testSetSize = 10;
 
   // let numberCorrect = 0;
   // for (let i = 0; i < testSet.length; i++) {
@@ -16,14 +15,30 @@ function runAnalysis() {
   //   }
   // }
   // console.log("Accuracy :" + (numberCorrect / testSetSize).toFixed(2));
-  _.range(1, 20).forEach((k) => {
+
+// in this we are taking range of values of K
+  // _.range(1, 20).forEach((k) => {
+  //   const accuracy = _.chain(testSet)
+  //     .filter(testpoint => knn(trainingSet, _.initial(testpoint), k) == testpoint[3])
+  //     .size()
+  //     .divide(testSetSize)
+  //     .value();
+
+  //   console.log("Accuracy for ",k," :" , accuracy);
+  // });
+
+  _.range(0, 3).forEach((feature) => {
+    // position or bounciness or size individually to select feature
+    const data = outputs.map(row => [row[feature] , _.last(row)])
+  const [testSet, trainingSet] = splitDataset(minMax(data,1), testSetSize);
+
     const accuracy = _.chain(testSet)
-      .filter(testpoint => knn(trainingSet, _.initial(testpoint), k) == testpoint[3])
+      .filter(testpoint => knn(trainingSet, _.initial(testpoint), k) == _.last(testpoint))
       .size()
       .divide(testSetSize)
       .value();
 
-    console.log("Accuracy for ",k," :" , accuracy);
+    console.log("Accuracy for feature ",feature," :" , accuracy);
   });
 }
 function knn(dataset, point, k) {
@@ -64,4 +79,21 @@ function splitDataset(data, testCount) {
   const trainingSet = _.slice(shuffled, testCount);
 
   return [testSet, trainingSet];
+}
+
+//this function helps to normalise
+function minMax(data,featureCount){
+  const clonedData =_.cloneDeep(data)
+
+  for(let i=0;i<featureCount;i++){
+    const column = clonedData.map(row => row[i])
+
+    const min = _.min(column)
+    const max = _.max(column)
+
+    for(let j=0;j<clonedData.length;j++){
+      clonedData[j][i]= (clonedData[j][i] - min) / (max-min)
+    }
+  }
+  return clonedData
 }
